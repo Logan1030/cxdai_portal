@@ -1,0 +1,7 @@
+User-Agent: *
+Disallow:/js/
+Disallow:/css/
+Disallow:/banner/
+Disallow:/search?*
+Disallow:/index.html?*
+Sitemap:http://www.gcjr.com/sitemap.xml

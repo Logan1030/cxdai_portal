@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cxdai.portal.configuration.mapper.ConfigurationMapper">
+
+	<select id="selectAll" resultMap="com.cxdai.base.mapper.BaseConfigurationMapper.BaseResultMap">
+		select * from rocky_configuration where STATUS = 0 order by TYPE, `ORDER`
+	</select>
+
+</mapper>

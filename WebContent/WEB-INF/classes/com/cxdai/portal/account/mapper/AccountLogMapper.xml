@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.cxdai.portal.account.mapper.AccountLogMapper">
+	
+	<!-- 封装查询条件 -->
+	<sql id="accountLog_Where_Clause">
+		<if test="id != null">
+			and a.id =#{id}
+		</if>
+		<if test="userId != null ">
+			and a.USER_ID = #{userId}
+		</if>
+		<if test="type != null ">
+			and a.TYPE = #{type}
+		</if>
+		<if test="remark != null ">
+			and a.REMARK = #{remark}
+		</if>				
+	</sql>
+	
+  	  	<!-- 根据条件查询记录数量-->
+	<select id="queryAccountLogCount" parameterType="com.cxdai.portal.account.vo.AccountLogCnd" resultType="java.lang.Integer" >
+		select count(a.id)
+		from
+			rocky_accountlog a
+		where 1=1
+		<include refid="accountLog_Where_Clause"/>
+  	</select>
+  	
+  	<!-- 参与股东加权最低总额 -->
+  	<select id="haveStockMoney" parameterType="java.lang.Integer" resultType="java.math.BigDecimal">
+  		select max(total)*0.1 from rocky_accountlog where user_id=#{userId} and ADDTIME BETWEEN 1380124800 and 1411747199
+  	</select>
+  	
+  	<!-- 使用 添加 账户记录   -->
+  	<insert id="lott_insert" parameterType="com.cxdai.portal.account.vo.AccountLogCnd">
+	     insert into rocky_accountlog ( USER_ID, TYPE, 
+      TOTAL, MONEY, USE_MONEY, 
+      NO_USE_MONEY, COLLECTION, TO_USER, 
+      BORROW_ID, BORROW_NAME, ID_TYPE, 
+      REMARK, ADDTIME, ADDIP, 
+      FIRST_BORROW_USE_MONEY, DRAW_MONEY, NO_DRAW_MONEY
+      )
+    values ( #{userId,jdbcType=INTEGER}, #{type,jdbcType=VARCHAR}, 
+      #{total,jdbcType=DECIMAL}, #{money,jdbcType=DECIMAL}, #{useMoney,jdbcType=DECIMAL}, 
+      #{noUseMoney,jdbcType=DECIMAL}, #{collection,jdbcType=DECIMAL}, #{toUser,jdbcType=INTEGER}, 
+      #{borrowId,jdbcType=INTEGER}, #{borrowName,jdbcType=VARCHAR}, #{idType,jdbcType=INTEGER}, 
+      #{remark,jdbcType=VARCHAR}, #{addtime,jdbcType=VARCHAR}, #{addip,jdbcType=VARCHAR}, 
+      #{firstBorrowUseMoney,jdbcType=DECIMAL}, #{drawMoney,jdbcType=DECIMAL}, #{noDrawMoney,jdbcType=DECIMAL}
+      )
+	</insert>
+  	
+  	
+  	
+  	
+</mapper>  

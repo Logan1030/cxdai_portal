@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.cxdai.portal.fix.mapper.FixTenderRealMapper">
+
+	<resultMap id="fixTenderRealMap" type="com.cxdai.portal.fix.vo.FixTenderRealVo">
+		<result property="userId" column="USER_ID" />
+		<result property="fixBorrowId" column="FIX_BORROW_ID" />
+		<result property="status" column="STATUS" />
+		<result property="account" column="ACCOUNT" />
+		<result property="useMoney" column="USE_MONEY" />
+		<result property="addTime" column="ADDTIME" />
+		<result property="orderNum" column="ORDERNUM" />
+		<result property="fixTenderType" column="FIX_TENDER_TYPE" />
+		<result property="parentId" column="PARENT_ID" />
+		<result property="unlockUserid" column="UNLOCK_USERID" />
+		<result property="unlockTime" column="UNLOCK_TIME" />
+		<result property="lockLimit" column="LOCK_LIMIT" />
+		<result property="unlockIp" column="UNLOCK_IP" />
+		<result property="remark" column="REMARK" />
+		<result property="hasReturnMoney" column="hasReturnMoney" />
+		<result property="lockEndTime" column="LOCK_ENDTIME" />
+		<result property="contractNo" column="CONTRACT_NO" />
+		<result property="cnt" column="cnt" />
+		<result property="areaType" column="AREA_TYPE" />
+		<result property="areaChangeTime" column="AREA_CHANGE_TIME" />
+		<result property="tenderType" column="TENDER_TYPE" />
+		<result property="redMoney" column="RED_MONEY" />
+	</resultMap>
+
+	<!-- 添加最终认购记录 -->
+	<insert id="insertFixTenderReal" parameterType="com.cxdai.base.entity.FixTenderReal">
+		INSERT INTO t_fix_tender_real (
+		FIX_BORROW_ID,
+		USER_ID,
+		ACCOUNT,
+		USE_MONEY,
+		STATUS,
+		ORDERNUM,
+		FIX_TENDER_TYPE,
+		<if test="parentId != null ">
+			PARENT_ID,
+		</if>
+		<if test="unlockUserid != null">
+			UNLOCK_USERID,
+			UNLOCK_TIME,
+			UNLOCK_IP,
+		</if>
+		<if test="remark != null ">
+			REMARK,
+		</if>
+		ADDTIME
+		) VALUES (
+		#{fixBorrowId},
+		#{userId},
+		#{account},
+		#{useMoney},
+		#{status},
+		#{orderNum},
+		#{fixTenderType},
+		<if test="parentId != null ">
+			#{parentId},
+		</if>
+		<if test="unlockUserid != null">
+			#{unlockUserid},
+			#{unlockTime},
+			#{unlockIp},
+		</if>
+		<if test="remark != null ">
+			#{remark},
+		</if>
+		now()
+		)
+		<selectKey resultType="java.lang.Integer" order="AFTER"
+			keyProperty="id">
+			SELECT LAST_INSERT_ID() AS ID
+		</selectKey>
+	</insert>
+
+
+	<!--通过定期宝id查找real记录信息 -->
+	<select id="getFixTenderRealByBorrowId" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultType="com.cxdai.portal.fix.vo.FixTenderRealVo">
+		SELECT * from t_fix_tender_real tenderReal where 1=1
+
+		<if test="fixBorrowId!=null">
+			and fix_borrow_id = #{fixBorrowId}
+		</if>
+	</select>
+	<!--通过定期宝id统计投标信息 -->
+	<select id="getFixTenderRealstaticByBorrowId" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultMap="fixTenderRealMap">
+
+
+		SELECT freal.*,tenderUser.cnt from
+		(SELECT treal.*,fixb.name,fixb.CONTRACT_NO contractNo,fixb.LOCK_LIMIT
+		lockLimit,fixb.apr,fixb.LOCK_ENDTIME lockEndTime,fixb.PUBLISH_TIME publishTime
+		from t_fix_tender_real treal
+		,
+		t_fix_borrow fixb
+		where
+		treal.FIX_BORROW_ID = fixb.ID
+		and treal.STATUS ='0'
+		<if test="userId!=null">
+			and treal.USER_ID = #{userId}
+		</if>
+		) freal left join (SELECT
+		FIX_BORROW_ID ,USER_ID ,COUNT(1) cnt from t_fix_tender_user
+		where 1=1
+		<if test="userId!=null">
+			and USER_ID = #{userId}
+		</if>
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on (freal.fix_borrow_id = tenderUser.fix_borrow_id and
+		freal.user_id = tenderUser.user_id) where 1=1
+
+
+		<if test="fixBorrowId!=null">
+			and freal.fix_borrow_id = #{fixBorrowId}
+		</if>
+		<if test="userId!=null">
+			and freal.USER_ID = #{userId}
+		</if>
+	</select>
+
+
+	<!--统计定期宝收益中记录 -->
+	<select id="queryTotalSYCounts" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultType="java.lang.Integer">
+
+		SELECT count(1) from
+		(SELECT tendreal.*,fborrow.name,fborrow.PUBLISH_TIME,fborrow.LOCK_LIMIT from t_fix_tender_real tendreal
+		,
+		t_fix_borrow fborrow
+		where tendreal.FIX_BORROW_ID = fborrow.ID
+		and tendreal.STATUS ='0' and tendreal.USER_ID=#{userId}) fixBorrow left join (SELECT FIX_BORROW_ID ,USER_ID ,COUNT(1)
+		cnt from t_fix_tender_user
+		where USER_ID=#{userId}
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on
+		(fixBorrow.fix_borrow_id = tenderUser.fix_borrow_id and fixBorrow.user_id = tenderUser.user_id)
+		where 1=1
+		<if test="tag != null">
+			and fixBorrow.lock_limit = #{tag}
+		</if>
+
+		<if test="userId!=null">
+			and fixBorrow.USER_ID = #{userId}
+		</if>
+
+	</select>
+
+
+	<!--统计定期宝收益中记录 -->
+	<select id="queryTotalSYByPage" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultMap="fixTenderRealMap">
+
+		SELECT fixBorrow.*,tenderUser.cnt,
+		(SELECT TENDER_TYPE from t_fix_tender_detail  where FIX_BORROW_ID=fixBorrow.FIX_BORROW_ID  and USER_ID=fixBorrow.USER_ID and TENDER_TYPE=1 limit 1) as TENDER_TYPE,
+	    (SELECT IFNULL(SUM(MONEY),0) FROM t_red_envelop_account_log WHERE BIZ_TYPE=1 AND `STATUS`=3 AND USEBIZ_ID = fixBorrow.FIX_BORROW_ID AND USER_ID = fixBorrow.USER_ID) as RED_MONEY
+		from
+		(SELECT
+		tendreal.*,fborrow.name,fborrow.CONTRACT_NO,fborrow.LOCK_LIMIT,fborrow.apr,fborrow.LOCK_ENDTIME,fborrow.PUBLISH_TIME,
+		fborrow.AREA_TYPE,fborrow.AREA_CHANGE_TIME
+		from t_fix_tender_real tendreal
+		,
+		t_fix_borrow fborrow
+		where
+		tendreal.FIX_BORROW_ID = fborrow.ID
+		and tendreal.STATUS ='0' and tendreal.USER_ID=#{userId}) fixBorrow left join (SELECT
+		FIX_BORROW_ID ,USER_ID ,COUNT(1) cnt from t_fix_tender_user
+		where USER_ID=#{userId}
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on (fixBorrow.fix_borrow_id = tenderUser.fix_borrow_id and
+		fixBorrow.user_id = tenderUser.user_id) where 1=1
+
+		<if test="tag != null">
+			and fixBorrow.lock_limit = #{tag}
+		</if>
+		<if test="userId!=null">
+			and fixBorrow.USER_ID = #{userId}
+		</if>
+		order by fixBorrow.PUBLISH_TIME asc,fixBorrow.addtime asc 
+	</select>
+
+
+
+	<!--统计定期宝退出记录 -->
+	<select id="queryTotalTCCounts" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultType="java.lang.Integer">
+
+		SELECT count(1) from
+		(SELECT
+		tendreal.*,fborrow.name,fborrow.CONTRACT_NO,collect.REPAY_YESTIME LOCK_LIMIT,fborrow.apr,fborrow.LOCK_ENDTIME,fborrow.PUBLISH_TIME,(SELECT NULLIF((collect.REPAY_YESACCOUNT-collect.CAPITAL),0)  from  t_fix_collectionrecord  collection where collection.fix_borrow_id = fborrow.id  and
+	 collection.user_id =	tendreal.user_id)  	hasReturnMoney  from t_fix_tender_real tendreal
+		,
+		t_fix_borrow fborrow,t_fix_collectionrecord collect
+		where
+		tendreal.FIX_BORROW_ID = fborrow.ID and tendreal.FIX_BORROW_ID = collect.FIX_BORROW_ID and tendreal.USER_ID =
+		collect.USER_ID
+		and tendreal.STATUS ='1' and tendreal.USER_ID=#{userId}) borrow left join (SELECT
+		FIX_BORROW_ID ,USER_ID ,COUNT(1) cnt from t_fix_tender_user
+		where USER_ID=#{userId}
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on (borrow.fix_borrow_id = tenderUser.fix_borrow_id and
+		borrow.user_id = tenderUser.user_id) where 1=1
+		and borrow.USER_ID=#{userId}
+		<if test="tag != null">
+			and borrow.lock_limit = #{tag}
+		</if>
+
+
+	</select>
+
+
+    <!--统计定期宝退出记录 -->
+	<select id="queryTotalTCByPage" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultMap="fixTenderRealMap">
+
+		SELECT borrow.*,tenderUser.cnt,
+		(SELECT TENDER_TYPE from t_fix_tender_detail  where FIX_BORROW_ID=borrow.FIX_BORROW_ID  and USER_ID=borrow.USER_ID and TENDER_TYPE=1 limit 1) as TENDER_TYPE,
+		(SELECT IFNULL(SUM(MONEY),0) FROM t_red_envelop_account_log WHERE BIZ_TYPE=1 AND `STATUS`=3 AND USEBIZ_ID = borrow.FIX_BORROW_ID AND USER_ID = borrow.USER_ID) as RED_MONEY
+		 from
+		(SELECT
+		tendreal.*,fborrow.name,fborrow.CONTRACT_NO,fborrow.LOCK_LIMIT,fborrow.apr,fborrow.LOCK_ENDTIME,fborrow.PUBLISH_TIME,(SELECT NULLIF((collect.REPAY_YESACCOUNT-collect.CAPITAL),0)  from  t_fix_collectionrecord  collection where collection.fix_borrow_id = fborrow.id  and
+	 collection.user_id =	tendreal.user_id)  	hasReturnMoney,fborrow.AREA_TYPE,fborrow.AREA_CHANGE_TIME  from t_fix_tender_real tendreal
+		,
+		t_fix_borrow fborrow,t_fix_collectionrecord collect
+		where
+		tendreal.FIX_BORROW_ID = fborrow.ID and tendreal.FIX_BORROW_ID = collect.FIX_BORROW_ID and tendreal.USER_ID =
+		collect.USER_ID
+		and tendreal.STATUS ='1' and tendreal.USER_ID=#{userId}) borrow left join (SELECT
+		FIX_BORROW_ID ,USER_ID ,COUNT(1) cnt from t_fix_tender_user
+		where USER_ID=#{userId}
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on (borrow.fix_borrow_id = tenderUser.fix_borrow_id and
+		borrow.user_id = tenderUser.user_id) where 1=1
+
+		and borrow.USER_ID=#{userId}
+		<if test="tag != null and tag!='' ">
+			and borrow.lock_limit = #{tag}
+		</if>
+            order by borrow.PUBLISH_TIME asc,borrow.addtime asc 
+ 
+	</select>
+
+    <!--统计定期宝退出中详细信息 -->
+	<select id="getTcstaticByBorrowId" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultMap="fixTenderRealMap">
+
+
+		SELECT borrow.*,tenderUser.cnt from
+		(SELECT
+		tendreal.*,fborrow.name,fborrow.CONTRACT_NO,fborrow.LOCK_LIMIT,fborrow.apr,fborrow.LOCK_ENDTIME,fborrow.PUBLISH_TIME,(SELECT NULLIF((collect.REPAY_YESACCOUNT-collect.CAPITAL),0)  from  t_fix_collectionrecord  collection where collection.fix_borrow_id = fborrow.id  and
+	 collection.user_id =	tendreal.user_id)  	hasReturnMoney from t_fix_tender_real tendreal
+		,
+		t_fix_borrow fborrow,t_fix_collectionrecord collect
+		where
+		tendreal.FIX_BORROW_ID = fborrow.ID and tendreal.FIX_BORROW_ID = collect.FIX_BORROW_ID and tendreal.USER_ID =
+		collect.USER_ID
+		and tendreal.STATUS ='1' 
+		<if test="userId!=null">
+			and tendreal.USER_ID = #{userId}
+		</if>
+		) borrow left join (SELECT
+		FIX_BORROW_ID ,USER_ID ,COUNT(1) cnt from t_fix_tender_user
+		where 1=1
+		<if test="userId!=null">
+			and USER_ID = #{userId}
+		</if>
+		GROUP BY
+		FIX_BORROW_ID,USER_ID) tenderUser on (borrow.fix_borrow_id = tenderUser.fix_borrow_id and
+		borrow.user_id = tenderUser.user_id) where 1=1
+		<if test="fixBorrowId!=null">
+			and borrow.fix_borrow_id = #{fixBorrowId}
+		</if>
+		<if test="userId!=null">
+			and borrow.USER_ID = #{userId}
+		</if>
+	</select>
+
+	<!-- 查询最大排序号 -->
+	<select id="queryMaxOrderNum" resultType="java.lang.Integer">
+		select ifnull(max(ORDERNUM),0) from t_fix_tender_real
+	</select>
+	
+	<!-- 查询定期宝的预期收益-->
+	<select id="getYqsyBySzy" parameterType="com.cxdai.portal.fix.vo.FixTenderRealCnd"
+		resultType="java.math.BigDecimal">
+		SELECT sum(collection.INTEREST) from t_fix_collectionrecord collection where collection.USER_ID =#{userId} and status =0
+	</select>
+	
+	<!-- 根据用户ID获取有效认购总额 -->
+ 	 <select id="findAccountTotalByUserIdAndFixBorrowId" resultType="java.lang.Integer" >
+ 	 	SELECT SUM(ACCOUNT) FROM t_fix_tender_real where fix_borrow_id = #{fixBorrowId} and USER_ID = #{userId} AND `STATUS` = 0
+ 	 </select>
+</mapper>

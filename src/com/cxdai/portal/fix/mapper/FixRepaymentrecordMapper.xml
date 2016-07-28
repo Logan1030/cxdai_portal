@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.cxdai.portal.fix.mapper.FixRepaymentrecordMapper">
+
+	<!-- 新增定期宝待还记录 -->
+	<insert id="insertFixRepaymentrecord" parameterType="com.cxdai.base.entity.FixRepaymentrecord">
+		INSERT INTO t_fix_repaymentrecord ( 
+			STATUS,
+			FIX_BORROW_ID,
+			REPAYMENT_TIME,
+			REPAYMENT_ACCOUNT,
+			INTEREST,
+			CAPITAL,
+			ADDTIME,
+			ADDIP,
+			PLATFORM
+		) VALUES (
+		    #{status},
+		    #{fixBorrowId},
+		    #{repaymentTime},
+		    #{repaymentAccount},
+		    #{interest},
+		    #{capital},
+		    now(),
+		    #{addip},
+		    #{platform}
+		)
+		<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">  
+	      	    SELECT LAST_INSERT_ID() AS ID    
+	   	</selectKey>	
+	</insert>
+	
+	<!-- 统计查询已经付给用户利息总金额 -->
+	<select id="queryTotalInterest" resultType="java.math.BigDecimal">
+		SELECT ifnull(SUM(INTEREST),0) FROM T_FIX_REPAYMENTRECORD WHERE STATUS =1
+	</select>
+	
+	<!-- 统计查询累计加入(收益中和已退出的)总金额 -->
+	<select id="querySumCapital" resultType="java.math.BigDecimal">
+		select sum(CAPITAL) from  T_FIX_REPAYMENTRECORD
+	</select>
+</mapper>	

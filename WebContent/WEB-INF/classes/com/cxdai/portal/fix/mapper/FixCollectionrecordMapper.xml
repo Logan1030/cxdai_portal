@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.cxdai.portal.fix.mapper.FixCollectionrecordMapper">
+
+<!-- 新增投资人待收记录 -->
+<insert id="insertFixCollectionrecord" parameterType="com.cxdai.base.entity.FixCollectionrecord">
+		INSERT INTO t_fix_collectionrecord ( 
+		FIX_BORROW_ID,
+		USER_ID,
+		FIX_TENDER_REAL_ID,
+		STATUS,
+		REPAY_TIME,
+		REPAY_ACCOUNT,
+		INTEREST,
+		CAPITAL,
+		ADDTIME,
+		ADDIP
+		) VALUES (
+        #{fixBorrowId},
+        #{userId},
+        #{fixTenderRealId},
+        #{status},
+        #{repayTime},
+        #{repayAccount},
+        #{interest},
+        #{capital},
+        now(),
+        #{addip}
+		)
+	<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">  
+      	    SELECT LAST_INSERT_ID() AS ID    
+   	</selectKey>	
+</insert>
+</mapper>	
